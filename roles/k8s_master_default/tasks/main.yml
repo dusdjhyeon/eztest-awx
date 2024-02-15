@@ -1,0 +1,43 @@
+---
+# tasks file for k8s_master_default
+- name: kubeadm init or join multi-master
+  shell: "{{ kubeadm_command }}"
+  register: command_output
+
+- name: Print command output
+  debug:
+    msg: "{{ command_output.stdout }}"
+
+- name: Create .kube directory
+  file: 
+    path: "{{ ansible_env.HOME }}/.kube"
+    state: directory
+    owner: "{{ ansible_env.USER }}"
+    group: "{{ ansible_env.USER }}"
+
+- name: Copy admin.conf to .kube directory
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: "{{ ansible_env.HOME }}/.kube/config"
+    owner: "{{ ansible_env.USER }}"
+    group: "{{ ansible_env.USER }}"
+    force: yes
+    remote_src: yes
+
+- name: Set KUBECONFIG environment variable
+  lineinfile:
+    path: "{{ ansible_env.HOME }}/.bashrc"
+    line: '{{ item }}'
+  loop:
+    - 'export KUBECONFIG=$HOME/admin.conf'
+    - 'KUBECONFIG=/etc/kubernetes/admin.conf'
+
+- name: Install Calico CNI
+  shell:
+    cmd: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/{{ calico_version }}/manifests/calico.yaml
+
+- name: Download caclicoctl
+  get_url:
+    url: https://github.com/projectcalico/calico/releases/download/{{ calico_version }}/calicoctl-linux-amd64
+    dest: /usr/local/bin/calicoctl
+    mode: '0755'

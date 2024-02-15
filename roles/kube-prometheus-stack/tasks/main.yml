@@ -1,0 +1,35 @@
+---
+# tasks file for kube-prometheus-stack
+- name: Install specific version of Helm
+  shell: |
+    curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash -s -- --version {{ helm_version }}
+  args:
+    chdir: /etc/kubernetes
+
+- name: Add prometheus-community to Helm repo
+  shell: |
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    helm repo update
+  args:
+    chdir: /etc/kubernetes
+
+- name: Pull and unpack Prometheus Stack
+  shell: |
+    helm pull prometheus-community/kube-prometheus-stack
+    tar xfz kube-prometheus-stack-56.6.2.tgz
+    rm -rf kube-prometheus-stack-56.6.2.tgz
+  args:
+    chdir: /etc/kubernetes
+
+- name: Update adminPasword in values.yaml
+  replace:
+    path: /etc/kubernetes/kube-prometheus-stack/values.yaml
+    regexp: 'adminPassword:.*'
+    replace: 'adminPassword: {{ grafana_password }}'
+
+- name: Install Prometheus
+  shell: |
+    kubectl create namespace monitoring
+    helm install prometheus . -n monitoring -f values.yaml 
+  args:
+    chdir: /etc/kubernetes/kube-prometheus-stack

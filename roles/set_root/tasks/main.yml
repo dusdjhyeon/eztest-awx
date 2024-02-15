@@ -1,0 +1,12 @@
+---
+# tasks file for set_root
+- name: Set root password
+  user:
+    name: root
+    password: "{{ root_password | password_hash('sha512') }}"
+- name: Edit sudoers file
+  lineinfile:
+    path: /etc/sudoers
+    regexp: '^root\s+ALL=\(ALL\)\s+ALL'
+    line: 'root   ALL=(ALL)   NOPASSWD: ALL'
+    validate: 'visudo -cf %s'
