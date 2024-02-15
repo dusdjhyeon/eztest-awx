@@ -1,0 +1,23 @@
+plugin: aws_ec2
+
+boto_profile: default
+
+regions:
+  - ap-northeast-1
+filters:
+  instance-state-name: running
+  'tag:Creator': dusdjhyeon
+
+compose:
+  ansible_host: private_ip_address
+  tag_Name_startswitch_dh_k8s: tags.Name.startswitch('dh-k8s') | ternary(tags.Name, '')
+
+hostnames:
+  - private-ip-address
+
+keyed_groups:
+  - prefix: arch
+    key: 'architecture'
+  - prefix: tag_Name_start
+    key: tag_Name_startswitch_dh_k8s
+    separator: ''
