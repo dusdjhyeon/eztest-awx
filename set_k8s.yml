@@ -1,0 +1,23 @@
+---
+- hosts: all
+  become: yes
+  vars_files:
+    - secrets.yml
+  vars:
+    os: xUbuntu_22.04
+    crio_version: 1.28
+    calico_version: v3.27.0
+    helm_version: v3.13.0
+  vars_prompt:
+    - name: "kubeadm_command"
+      prompt: "Enter the command to init master or add multi-master"
+      private: no
+  pre_tasks:
+    - name: Set root password
+      user:
+        name: root
+        password: "{{ root_password | password_hash('sha512') }}"
+  roles:
+    - k8s_default
+    - k8s_master_default
+    - kube-prometheus-stack
